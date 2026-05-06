@@ -321,13 +321,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Oja overlay: Py_Finalize() must run AFTER the outer @autoreleasepool
-    // drains.  rubicon-objc registers libffi closures as IMPs for ObjC methods
-    // defined in Python (Toga's window/animation delegates, theme observer
-    // Blocks, etc.); any selector dispatched to such an instance after
-    // Py_Finalize crashes inside PyGILState_Ensure.  The only place this
-    // ordering can be fixed is here in the stub -- the outer pool's token
-    // lives on main()'s C stack and is unreachable from Python.
+    // Oja forked Briefcase Xcode template: Py_Finalize() must run AFTER the
+    // outer @autoreleasepool drains.  rubicon-objc registers libffi closures
+    // as IMPs for ObjC methods defined in Python (Toga's window/animation
+    // delegates, theme observer Blocks, etc.); any selector dispatched to such
+    // an instance after Py_Finalize crashes inside PyGILState_Ensure.  The
+    // only place this ordering can be fixed is here in the stub -- the outer
+    // pool's token lives on main()'s C stack and is unreachable from Python.
     Py_Finalize();
 
     exit(ret);
