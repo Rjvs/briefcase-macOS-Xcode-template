@@ -171,6 +171,29 @@ int main(int argc, char *argv[]) {
         }
         PyMem_RawFree(wtmp_str);
 
+        // Add the app_packages path.
+        //
+        // app_packages is also added as a site directory below (after the
+        // interpreter starts) so its .pth files are processed; but that
+        // happens *after* setup_stdout() runs app_packages/nslog.py. Modern
+        // std-nslog (>=2.0) imports a binary extension module (_oslog_shim)
+        // that lives in app_packages, so app_packages must already be on the
+        // module search path before the interpreter starts and nslog runs —
+        // otherwise that import fails with ModuleNotFoundError and stdout/
+        // stderr are never redirected to the unified log. site.addsitedir is
+        // idempotent for an already-present path, so listing it here does not
+        // duplicate it on sys.path.
+        path = [NSString stringWithFormat:@"%@/app_packages", resourcePath, nil];
+        debug_log(@"- %@", path);
+        wtmp_str = Py_DecodeLocale([path UTF8String], NULL);
+        status = PyWideStringList_Append(&config.module_search_paths, wtmp_str);
+        if (PyStatus_Exception(status)) {
+            crash_dialog([NSString stringWithFormat:@"Unable to set app_packages path: %s", status.err_msg, nil]);
+            PyConfig_Clear(&config);
+            Py_ExitStatusException(status);
+        }
+        PyMem_RawFree(wtmp_str);
+
         debug_log(@"Configure argc/argv...");
         status = PyConfig_SetBytesArgv(&config, argc, argv);
         if (PyStatus_Exception(status)) {
